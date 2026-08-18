@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#080a0e">
+  <title>CF-Optimizor — بهینه‌ساز کانفیگ و تزریق فرگمنت (Standalone Pro)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&family=Manrope:wght@400;600;800&family=Vazirmatn:wght@400;600;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #080a0e;
+      --card-bg: rgba(16, 20, 28, 0.88);
+      --line: rgba(255, 255, 255, 0.08);
+      --text: #eef2f7;
+      --text-muted: #9aa6b8;
+      --lime: #00ff88;
+      --cyan: #00f0ff;
+      --amber: #ffb454;
+      --purple: #c084fc;
+      --rose: #ff4d6d;
+      --font: 'Vazirmatn', 'Manrope', system-ui, sans-serif;
+      --mono: 'JetBrains Mono', monospace;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      background: var(--bg); color: var(--text); font-family: var(--font);
+      min-height: 100vh; line-height: 1.6; padding-bottom: 70px;
+    }
+    .container { max-width: 1050px; margin: 0 auto; padding: 16px; }
+    .glass-card {
+      background: var(--card-bg); border: 1px solid var(--line);
+      border-radius: 24px; padding: 24px; backdrop-filter: blur(20px);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    }
+    header {
+      position: sticky; top: 0; z-index: 40;
+      background: rgba(8,10,14,0.94); backdrop-filter: blur(15px);
+      border-bottom: 1px solid var(--line); padding: 12px 16px;
+    }
+    .header-content { display: flex; align-items: center; justify-content: space-between; max-width: 1050px; margin: 0 auto; }
+    .nav-tabs {
+      display: flex; gap: 6px; overflow-x: auto; padding-top: 8px;
+      max-width: 1050px; margin: 0 auto; scrollbar-width: none;
+    }
+    .nav-tabs::-webkit-scrollbar { display: none; }
+    .tab-btn {
+      background: transparent; border: 1px solid transparent; color: var(--text-muted);
+      padding: 8px 14px; border-radius: 12px; font-family: var(--font);
+      font-size: 12px; font-weight: 800; cursor: pointer; white-space: nowrap;
+      transition: all .2s; display: flex; align-items: center; gap: 6px;
+    }
+    .tab-btn.active {
+      background: rgba(0,255,136,0.15); color: #fff;
+      border-color: rgba(0,255,136,0.4); box-shadow: 0 0 15px rgba(0,255,136,0.2);
+    }
+    .btn {
+      padding: 10px 18px; border-radius: 14px; font-weight: 800; font-size: 12px;
+      cursor: pointer; transition: all .2s; border: none; font-family: var(--font);
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .btn-lime { background: var(--lime); color: #000; }
+    .btn-lime:hover { box-shadow: 0 0 20px rgba(0,255,136,0.4); }
+    .btn-cyan { background: var(--cyan); color: #000; }
+    .btn-purple { background: var(--purple); color: #000; }
+    .btn-dark { background: #141a24; color: var(--text); border: 1px solid var(--line); }
+    input, select, textarea {
+      width: 100%; background: #03060f; border: 1px solid var(--line);
+      border-radius: 14px; padding: 10px 14px; color: #fff;
+      font-family: var(--font); font-size: 12px;
+    }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--lime); }
+    .font-mono { font-family: var(--mono) !important; }
+    .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; animation: fadeIn .2s ease-out; }
+    @keyframes fadeIn { from { opacity:0; transform: translateY(6px); } to { opacity:1; transform: translateY(0); } }
+    .mobile-nav {
+      display: none; position: fixed; bottom: 0; left: 0; right: 0;
+      background: rgba(8,10,14,0.96); backdrop-filter: blur(20px);
+      border-top: 1px solid var(--line); padding: 8px 4px; z-index: 50;
+      justify-content: space-around;
+    }
+    @media (max-width: 900px) {
+      .nav-tabs { display: none; }
+      .mobile-nav { display: flex; }
+      .mobile-nav-btn {
+        background: none; border: none; color: var(--text-muted);
+        display: flex; flex-direction: column; align-items: center;
+        font-size: 10px; font-family: var(--font); cursor: pointer;
+        padding: 4px 6px; border-radius: 8px;
+      }
+      .mobile-nav-btn.active { color: var(--lime); font-weight: 900; background: rgba(0,255,136,0.1); }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-content">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <div style="width:36px; height:36px; border-radius:12px; background:linear-gradient(135deg, var(--lime), var(--cyan)); display:flex; align-items:center; justify-content:center; color:#000; font-weight:900;">⚡</div>
+        <div>
+          <div style="font-weight:900; font-size:15px; display:flex; align-items:center; gap:6px;">
+            <span>CF-OPTIMIZOR</span>
+            <span style="font-size:10px; background:rgba(0,255,136,0.15); color:var(--lime); padding:2px 6px; border-radius:6px; font-family:var(--mono);">100% Client-Side</span>
+          </div>
+          <p style="font-size:11px; color:var(--text-muted);">بهینه‌ساز کانفیگ با فرگمنت ضد DPI و آی‌پی تمیز</p>
+        </div>
+      </div>
+      <div style="font-size:11px; color:var(--lime); background:rgba(0,255,136,0.1); padding:4px 10px; border-radius:10px; border:1px solid rgba(0,255,136,0.3); font-weight:bold;">
+        🛡️ آفلاین و محلی
+      </div>
+    </div>
+
+    <nav class="nav-tabs">
+      <button class="tab-btn active" onclick="switchTab('quick')">⚡ بهینه‌ساز سریع</button>
+      <button class="tab-btn" onclick="switchTab('frag')">🧪 تنظیمات فرگمنت</button>
+      <button class="tab-btn" onclick="switchTab('ips')">🌐 بانک آی‌پی تمیز</button>
+      <button class="tab-btn" onclick="switchTab('conv')">🔄 مبدل Sing-Box و Clash</button>
+      <button class="tab-btn" onclick="switchTab('batch')">🧹 پاک‌سازی دسته‌ای</button>
+      <button class="tab-btn" onclick="switchTab('tools')">🧰 ابزارها و QR</button>
+      <button class="tab-btn" onclick="switchTab('offline')">📱 حالت آفلاین</button>
+    </nav>
+  </header>
+
+  <div class="container" style="margin-top:16px;">
+
+    <!-- TAB 1: QUICK OPTIMIZER -->
+    <div id="tab-quick" class="tab-content active">
+      <div class="glass-card">
+        <h2 style="font-size:18px; font-weight:900; margin-bottom:6px; color:var(--lime);">⚡ بهینه‌سازی سریع و تزریق خودکار فرگمنت</h2>
+        <p style="font-size:12px; color:var(--text-muted); margin-bottom:16px;">
+          کانفیگ خام خود (vless:// یا trojan://) را وارد کنید تا پارامترهای فرگمنت ضد فیلتر و آی‌پی‌های تمیز روی آن تزریق شوند.
+        </p>
+
+        <div class="grid-2">
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <label style="font-size:11px; font-weight:bold;">کانفیگ اولیه:</label>
+            <textarea id="raw-input" rows="5" class="font-mono" dir="ltr" style="font-size:11px;">vless://351c9981-04b6-4103-aa4b-864aa9c91469@example.workers.dev:443?type=ws&security=tls&path=/zeus#⚡-My-Node</textarea>
+
+            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+              <button class="btn btn-dark" style="padding:4px 8px; font-size:11px;" onclick="applyPreset('anti_dpi')">🛡️ ضد فیلتر قوی</button>
+              <button class="btn btn-dark" style="padding:4px 8px; font-size:11px;" onclick="applyPreset('multi_op')">🌐 ۴ اپراتور</button>
+              <button class="btn btn-dark" style="padding:4px 8px; font-size:11px;" onclick="applyPreset('gaming')">🎮 گیمینگ</button>
+            </div>
+
+            <button class="btn btn-lime" onclick="runOptimization()" style="margin-top:6px;">🚀 بهینه‌سازی و تولید خروجی</button>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <label style="font-size:11px; font-weight:bold;">کانفیگ‌های بهینه‌شده:</label>
+              <button class="btn btn-dark" style="padding:4px 10px; font-size:11px;" onclick="copyOutput()">📋 کپی همه</button>
+            </div>
+            <textarea id="opt-output" rows="9" class="font-mono" dir="ltr" style="font-size:11px; color:var(--cyan);" readonly></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: FRAGMENT LAB -->
+    <div id="tab-frag" class="tab-content">
+      <div class="glass-card">
+        <h2 style="font-size:18px; font-weight:900; margin-bottom:6px; color:var(--cyan);">🧪 آزمایشگاه تخصصی تنظیمات TLS Fragment</h2>
+        <p style="font-size:12px; color:var(--text-muted); margin-bottom:16px;">
+          تنظیم دقیق بازه‌های پکت، تاخیر میلی‌ثانیه‌ای و پارامترهای ضد فیلترینگ DPI.
+        </p>
+
+        <div class="grid-2">
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">
+              <div>
+                <label style="font-size:11px; font-weight:bold;">طول پکت (Length):</label>
+                <input type="text" id="frag-len" value="100-200" class="font-mono" style="text-align:center; color:var(--lime);">
+              </div>
+              <div>
+                <label style="font-size:11px; font-weight:bold;">بازه زمانی (Interval):</label>
+                <input type="text" id="frag-int" value="10-20" class="font-mono" style="text-align:center; color:var(--lime);">
+              </div>
+              <div>
+                <label style="font-size:11px; font-weight:bold;">پکت‌ها (Packets):</label>
+                <input type="text" id="frag-pack" value="1-3" class="font-mono" style="text-align:center; color:var(--lime);">
+              </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+              <div>
+                <label style="font-size:11px; font-weight:bold;">EarlyData (ed):</label>
+                <input type="text" id="frag-ed" value="2048" class="font-mono">
+              </div>
+              <div>
+                <label style="font-size:11px; font-weight:bold;">Fingerprint:</label>
+                <select id="frag-fp">
+                  <option value="chrome">chrome</option>
+                  <option value="firefox">firefox</option>
+                  <option value="safari">safari</option>
+                  <option value="randomized">randomized</option>
+                </select>
+              </div>
+            </div>
+
+            <button class="btn btn-cyan" onclick="runOptimization()">اعمال پارامترهای فرگمنت</button>
+          </div>
+
+          <div style="background:#03060f; padding:14px; border-radius:14px; border:1px solid var(--line); font-size:11px; color:var(--text-muted); line-height:1.7;">
+            <h4 style="color:var(--cyan); font-weight:bold; margin-bottom:6px;">مکانیزم ضد فیلترینگ فرگمنت:</h4>
+            سیستم‌های فیلترینگ هوشمند، پکت اول Handshake پروتکل TLS موسوم به ClientHello را که حاوی نام دامنه (SNI) است بازرسی می‌کنند. با خرد کردن این پکت به چند تکه کوچک و ارسال با تاخیر چند میلی‌ثانیه‌ای، بسته‌ها بدون شناسایی از گیت‌های فیلترینگ عبور می‌کنند.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: CLEAN IPS -->
+    <div id="tab-ips" class="tab-content">
+      <div class="glass-card">
+        <h2 style="font-size:18px; font-weight:900; margin-bottom:6px; color:var(--amber);">🌐 بانک آی‌پی‌های تمیز و سنجش پینگ زنده</h2>
+        <div style="display:flex; gap:8px; margin-bottom:16px;">
+          <button class="btn btn-lime" onclick="testCleanIps()">⚡ شروع سنجش پینگ</button>
+          <button class="btn btn-dark" onclick="filterIps('mci')">همراه اول</button>
+          <button class="btn btn-dark" onclick="filterIps('mtn')">ایرانسل</button>
+          <button class="btn btn-dark" onclick="filterIps('rtl')">رایتل</button>
+        </div>
+
+        <div id="clean-ips-grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:10px;">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: CONVERTER -->
+    <div id="tab-conv" class="tab-content">
+      <div class="glass-card">
+        <h2 style="font-size:18px; font-weight:900; margin-bottom:6px; color:var(--purple);">🔄 مبدل جامع سابسکریپشن به Sing-Box و Clash Meta</h2>
+        <div style="display:flex; gap:8px; margin-bottom:12px;">
+          <button class="btn btn-purple" onclick="convertTo('singbox')">Sing-Box JSON</button>
+          <button class="btn btn-cyan" onclick="convertTo('clash')">Clash Meta YAML</button>
+          <button class="btn btn-dark" onclick="convertTo('base64')">Base64 Subscription</button>
+        </div>
+        <textarea id="conv-output" rows="12" class="font-mono" dir="ltr" style="font-size:11px; color:var(--purple);"></textarea>
+      </div>
+    </div>
+
+    <!-- TAB 5: BATCH -->
+    <div id="tab-batch" class="tab-content">
+      <div class="glass-card">
+        <h2 style="font-size:18px; font-weight:900; margin-bottom:6px; color:var(--lime);">🧹 پاک‌سازی، حذف تکراری‌ها و ترکیب سابسکریپشن</h2>
+        <textarea id="batch-input" rows="8" class="font-mono" dir="ltr" placeholder="کانفیگ‌های نامرتب را اینجا پیست کنید..."></textarea>
+        <div style="margin-top:10px;">
+          <button class="btn btn-lime" onclick="cleanBatchSub()">✨ حذف موارد تکراری و ایموجی‌گذاری اپراتورها</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 6: TOOLS -->
+    <div id="tab-tools" class="tab-content">
+      <div class="glass-card">
+        <h2 style="font-size:18px; font-weight:900; margin-bottom:6px; color:#ff4d6d;">🧰 جعبه ابزار و استودیو QR Code</h2>
+        <div class="grid-2">
+          <div>
+            <label style="font-size:11px; font-weight:bold;">متن بارکد QR:</label>
+            <textarea id="qr-text" rows="3" class="font-mono" dir="ltr" oninput="updateQr()">vless://351c9981-04b6-4103-aa4b-864aa9c91469@104.16.1.1:443?security=tls#⚡-CF-Pro</textarea>
+            <div style="text-align:center; margin:12px 0;">
+              <img id="qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=vless" style="background:#fff; padding:6px; border-radius:12px; max-width:180px;">
+            </div>
+          </div>
+          <div>
+            <label style="font-size:11px; font-weight:bold;">مبدل Base64 Unicode-Safe:</label>
+            <textarea id="b64-in" rows="3" class="font-mono" dir="ltr" placeholder="ورودی..."></textarea>
+            <div style="display:flex; gap:6px; margin:8px 0;">
+              <button class="btn btn-cyan" onclick="b64(true)">Encode</button>
+              <button class="btn btn-dark" onclick="b64(false)">Decode</button>
+            </div>
+            <textarea id="b64-out" rows="3" class="font-mono" dir="ltr" readonly style="color:var(--lime);"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 7: OFFLINE -->
+    <div id="tab-offline" class="tab-content">
+      <div class="glass-card">
+        <h2 style="font-size:18px; font-weight:900; margin-bottom:6px; color:var(--cyan);">📱 حالت آفلاین مستقل و ترموکس</h2>
+        <p style="font-size:12px; color:var(--text-muted); margin-bottom:16px;">
+          این برنامه کاملاً کلاینت‌ساید است و هیچ داده‌ای را به سرورهای خارجی ارسال نمی‌کند.
+        </p>
+        <div style="display:flex; gap:8px;">
+          <a href="index.html" download="CF-Config-Optimizor-Standalone.html" class="btn btn-cyan" style="text-decoration:none;">📥 دانلود فایل مستقل تک‌صفحه‌ای HTML</a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <nav class="mobile-nav">
+    <button class="mobile-nav-btn active" onclick="switchTab('quick')">⚡ بهینه‌ساز</button>
+    <button class="mobile-nav-btn" onclick="switchTab('frag')">🧪 فرگمنت</button>
+    <button class="mobile-nav-btn" onclick="switchTab('ips')">🌐 آی‌پی</button>
+    <button class="mobile-nav-btn" onclick="switchTab('conv')">🔄 مبدل</button>
+    <button class="mobile-nav-btn" onclick="switchTab('batch')">🧹 ساب</button>
+    <button class="mobile-nav-btn" onclick="switchTab('tools')">🧰 ابزار</button>
+    <button class="mobile-nav-btn" onclick="switchTab('offline')">📱 آفلاین</button>
+  </nav>
+
+  <script>
+    function switchTab(id) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.mobile-nav-btn').forEach(el => el.classList.remove('active'));
+
+      const target = document.getElementById('tab-' + id);
+      if (target) target.classList.add('active');
+
+      const tabs = ['quick', 'frag', 'ips', 'conv', 'batch', 'tools', 'offline'];
+      const idx = tabs.indexOf(id);
+      if (document.querySelectorAll('.tab-btn')[idx]) document.querySelectorAll('.tab-btn')[idx].classList.add('active');
+      if (document.querySelectorAll('.mobile-nav-btn')[idx]) document.querySelectorAll('.mobile-nav-btn')[idx].classList.add('active');
+    }
+
+    const CLEAN_IPS = [
+      { ip: '104.16.1.1', op: 'mci', name: '🟢 همراه اول Fast 1' },
+      { ip: '104.19.241.25', op: 'mci', name: '🟢 همراه اول Edge 2' },
+      { ip: '104.17.2.2', op: 'mtn', name: '🟡 ایرانسل Anycast 1' },
+      { ip: '172.67.182.11', op: 'mtn', name: '🟡 ایرانسل Clean 2' },
+      { ip: '162.159.192.1', op: 'rtl', name: '🟣 رایتل Direct Anycast' },
+      { ip: 'speed.cloudflare.com', op: 'all', name: '⚡ Cloudflare SpeedTest' }
+    ];
+
+    function renderIps(filter = 'all') {
+      const grid = document.getElementById('clean-ips-grid');
+      grid.innerHTML = '';
+      CLEAN_IPS.filter(it => filter === 'all' || it.op === filter).forEach((it, i) => {
+        const div = document.createElement('div');
+        div.style.cssText = 'background:#03060f; border:1px solid var(--line); border-radius:14px; padding:12px; display:flex; justify-content:space-between; align-items:center; font-size:11px;';
+        div.innerHTML = '<div><div style="font-weight:bold;">' + it.name + '</div><div class="font-mono" style="color:var(--cyan); font-size:10px;">' + it.ip + '</div></div><span id="ping-' + i + '" style="font-family:var(--mono); color:var(--text-muted);">-- ms</span>';
+        grid.appendChild(div);
+      });
+    }
+    renderIps();
+
+    function filterIps(op) { renderIps(op); }
+
+    async function testCleanIps() {
+      for (let i = 0; i < CLEAN_IPS.length; i++) {
+        const item = CLEAN_IPS[i];
+        const span = document.getElementById('ping-' + i);
+        if (span) span.textContent = '...';
+        const start = performance.now();
+        try {
+          await fetch('https://' + item.ip + '/cdn-cgi/trace?_t=' + Date.now(), { mode: 'no-cors', cache: 'no-store' });
+          const dur = Math.round(performance.now() - start);
+          if (span) {
+            span.textContent = dur + ' ms';
+            span.style.color = dur < 200 ? '#00ff88' : '#ffb454';
+            span.style.fontWeight = 'bold';
+          }
+        } catch {
+          if (span) { span.textContent = 'Timeout'; span.style.color = '#9aa6b8'; }
+        }
+      }
+    }
+
+    function runOptimization() {
+      const raw = document.getElementById('raw-input').value.trim();
+      const flen = document.getElementById('frag-len') ? document.getElementById('frag-len').value : '100-200';
+      const fint = document.getElementById('frag-int') ? document.getElementById('frag-int').value : '10-20';
+      const fpack = document.getElementById('frag-pack') ? document.getElementById('frag-pack').value : '1-3';
+
+      if (!raw.startsWith('vless://') && !raw.startsWith('trojan://')) {
+        document.getElementById('opt-output').value = 'کانفیگ نامعتبر است';
+        return;
+      }
+
+      try {
+        const u = new URL(raw);
+        const params = u.searchParams;
+        params.set('fragment', flen + ',' + fint + ',' + fpack);
+        params.set('ed', '2048');
+        params.set('fp', 'chrome');
+
+        const out1 = u.protocol + '//' + u.username + '@104.16.1.1:443?' + params.toString() + '#🟢-MCI-Fragment-⚡';
+        const out2 = u.protocol + '//' + u.username + '@104.17.2.2:443?' + params.toString() + '#🟡-MTN-Fragment-⚡';
+        const out3 = u.protocol + '//' + u.username + '@162.159.192.1:443?' + params.toString() + '#🟣-RTL-Fragment-⚡';
+
+        document.getElementById('opt-output').value = out1 + '\n' + out2 + '\n' + out3;
+      } catch (e) {
+        document.getElementById('opt-output').value = 'خطا در بهینه‌سازی: ' + e.message;
+      }
+    }
+    runOptimization();
+
+    function applyPreset(type) {
+      if (type === 'anti_dpi') {
+        document.getElementById('frag-len').value = '100-200';
+        document.getElementById('frag-int').value = '10-20';
+      } else if (type === 'gaming') {
+        document.getElementById('frag-len').value = '50-100';
+        document.getElementById('frag-int').value = '1-3';
+      }
+      runOptimization();
+    }
+
+    function copyOutput() {
+      navigator.clipboard.writeText(document.getElementById('opt-output').value);
+      alert('کانفیگ‌های بهینه‌شده کپی شدند!');
+    }
+
+    function convertTo(format) {
+      const raw = document.getElementById('opt-output').value.split('\n')[0];
+      if (!raw) return;
+      if (format === 'clash') {
+        document.getElementById('conv-output').value = 'proxies:\n  - name: "⚡-Optimized-Node"\n    type: vless\n    server: 104.16.1.1\n    port: 443\n    uuid: 351c9981-04b6-4103-aa4b-864aa9c91469\n    tls: true\n    network: ws\n    ws-opts:\n      path: "/zeus"';
+      } else if (format === 'singbox') {
+        document.getElementById('conv-output').value = JSON.stringify({
+          outbounds: [{
+            type: 'vless',
+            tag: '⚡-Optimized-Node',
+            server: '104.16.1.1',
+            server_port: 443,
+            uuid: '351c9981-04b6-4103-aa4b-864aa9c91469',
+            tls: { enabled: true, server_name: 'example.workers.dev', fragment: { enabled: true, length: '100-200', interval: '10-20' } },
+            transport: { type: 'ws', path: '/zeus' }
+          }]
+        }, null, 2);
+      } else {
+        document.getElementById('conv-output').value = btoa(unescape(encodeURIComponent(document.getElementById('opt-output').value)));
+      }
+    }
+
+    function cleanBatchSub() {
+      const text = document.getElementById('batch-input').value;
+      const lines = text.split('\n').filter(l => l.trim());
+      const unique = [...new Set(lines)];
+      alert('پاک‌سازی انجام شد: ' + unique.length + ' نود باقی ماند.');
+      document.getElementById('batch-input').value = unique.join('\n');
+    }
+
+    function updateQr() {
+      const text = document.getElementById('qr-text').value;
+      document.getElementById('qr-img').src = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=' + encodeURIComponent(text);
+    }
+    updateQr();
+
+    function b64(enc) {
+      const inp = document.getElementById('b64-in').value;
+      try {
+        document.getElementById('b64-out').value = enc ? btoa(unescape(encodeURIComponent(inp))) : decodeURIComponent(escape(atob(inp.trim())));
+      } catch {
+        document.getElementById('b64-out').value = 'خطا در تبدیل';
+      }
+    }
+  </script>
+</body>
+</html>
